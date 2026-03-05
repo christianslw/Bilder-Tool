@@ -62,6 +62,7 @@ function bindGlobalEvents() {
 
 function bindZoneEvents() {
   document.querySelectorAll('[data-zone]').forEach((element) => {
+    element.style.cursor = 'pointer';
     element.addEventListener('click', () => {
       setActiveZone(element.dataset.zone);
       hiddenFileInput.click();
@@ -78,17 +79,17 @@ function bindZoneEvents() {
     element.addEventListener('dragover', (event) => {
       event.preventDefault();
       setActiveZone(element.dataset.zone);
-      element.classList.add('active');
+      element.classList.add('opacity-80');
     });
 
     element.addEventListener('dragleave', () => {
-      element.classList.remove('active');
+      element.classList.remove('opacity-80');
     });
 
     element.addEventListener('drop', async (event) => {
       event.preventDefault();
       const files = Array.from(event.dataTransfer?.files || []).filter((file) => file.type.includes('jpeg') || file.type.includes('jpg'));
-      element.classList.remove('active');
+      element.classList.remove('opacity-80');
       if (files.length) {
         await addFilesToZone(files, element.dataset.zone);
       }
@@ -98,8 +99,6 @@ function bindZoneEvents() {
 
 function setActiveZone(zone) {
   state.activeZone = zone;
-  document.querySelectorAll('[data-zone]').forEach((el) => el.classList.remove('active'));
-  document.querySelectorAll(`[data-zone="${zone}"]`).forEach((el) => el.classList.add('active'));
 }
 
 async function pickFolder() {
@@ -110,7 +109,7 @@ async function pickFolder() {
       state.folderName = handle.name;
       folderFallbackInput.value = handle.name;
     } catch {
-      // Benutzer hat ggf. abgebrochen
+      // Abbruch
     }
   } else {
     alert('Directory Picker nicht verfügbar. Bitte Fallback-Pfad eintragen.');
@@ -118,8 +117,6 @@ async function pickFolder() {
 }
 
 async function addFilesToZone(files, zone) {
-  setActiveZone(zone);
-
   for (const file of files) {
     const compressed = await compressJpeg(file, 1024 * 1024);
     const entry = createEntry(compressed, zone, file.name);
@@ -135,90 +132,48 @@ function createEntry(file, zone, originalName) {
   const standortName = selected?.dataset.name || 'UNBEKANNT';
   const datePart = (dateInput.value || '1970-01-01').replaceAll('-', '');
   const comment = sanitize(commentInput.value);
-  const ext = '.jpg';
 
-  const segments = {
-    nummer,
-    datum: datePart,
-    sache: zone,
-    kommentar: comment
-  };
-
+  const fileName = `${nummer}_${datePart}_${zone}${comment ? `_${comment}` : ''}.jpg`;
   const folderPath = `${getRootFolder()}/${nummer} ${standortName}/Bilder/${zoneToFolder[zone] || zone}`;
-  const generatedName = buildFileName(segments, ext);
 
   return {
     id: crypto.randomUUID(),
     file,
-    ext,
     originalName,
-    oldGeneratedName: generatedName,
-    segments,
-    folderPath
+    currentName: fileName,
+    folderPath,
+    zone,
+    standortName
   };
-}
-
-function buildFileName(segments, ext) {
-  const base = `${segments.nummer}_${segments.datum}_${segments.sache}`;
-  return `${base}${segments.kommentar ? `_${segments.kommentar}` : ''}${ext}`;
 }
 
 function renderEntry(entry) {
   const node = fileItemTemplate.content.firstElementChild.cloneNode(true);
-  node.dataset.id = entry.id;
   const pathEl = node.querySelector('.path');
-  const editor = node.querySelector('.name-editor');
+  const editableName = node.querySelector('.editable-name');
   const oldName = node.querySelector('.old-name');
   const deleteBtn = node.querySelector('.delete');
 
-  pathEl.textContent = `${entry.folderPath}/${buildFileName(entry.segments, entry.ext)}`;
+  const refreshPath = () => {
+    pathEl.textContent = `${entry.folderPath}/${entry.currentName}`;
+  };
+
+  editableName.textContent = entry.currentName;
   oldName.textContent = `Vorher: ${entry.originalName}`;
-  editor.innerHTML = '';
+  refreshPath();
 
-  const pieceOrder = [
-    ['nummer', true],
-    ['_', false],
-    ['datum', true],
-    ['_', false],
-    ['sache', true],
-    ['kommentar', true, true],
-    [entry.ext, false]
-  ];
+  editableName.addEventListener('blur', () => {
+    entry.currentName = normalizeFilename(editableName.textContent || entry.currentName);
+    editableName.textContent = entry.currentName;
+    refreshPath();
+  });
 
-  for (const piece of pieceOrder) {
-    if (piece[0] === 'kommentar' && !entry.segments.kommentar) {
-      continue;
+  editableName.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      editableName.blur();
     }
-
-    const span = document.createElement('span');
-    if (piece[1]) {
-      span.className = 'segment';
-      span.contentEditable = 'true';
-      span.dataset.key = piece[0];
-      span.textContent = piece[0] === 'kommentar' ? `_${entry.segments.kommentar}` : entry.segments[piece[0]];
-
-      span.addEventListener('blur', () => {
-        let content = sanitize(span.textContent || '');
-        if (piece[0] === 'kommentar') {
-          content = sanitize(content.replace(/^_+/, ''));
-          entry.segments.kommentar = content;
-          if (!content) {
-            span.remove();
-          } else {
-            span.textContent = `_${content}`;
-          }
-        } else {
-          entry.segments[piece[0]] = content || entry.segments[piece[0]];
-          span.textContent = entry.segments[piece[0]];
-        }
-
-        pathEl.textContent = `${entry.folderPath}/${buildFileName(entry.segments, entry.ext)}`;
-      });
-    } else {
-      span.textContent = piece[0];
-    }
-    editor.appendChild(span);
-  }
+  });
 
   deleteBtn.addEventListener('click', () => {
     state.items = state.items.filter((item) => item.id !== entry.id);
@@ -235,6 +190,18 @@ function sanitize(value) {
     .replace(/\s+/g, '-');
 }
 
+function normalizeFilename(name) {
+  const parts = String(name || '')
+    .trim()
+    .replace(/\.(jpg|jpeg)$/i, '')
+    .split('_')
+    .map((part) => sanitize(part))
+    .filter(Boolean);
+
+  const cleaned = parts.join('_') || '0000_19700101_Mast';
+  return `${cleaned}.jpg`;
+}
+
 function getRootFolder() {
   return folderFallbackInput.value.trim() || state.folderName;
 }
@@ -245,13 +212,11 @@ async function persistIfPossible(entry) {
   }
 
   try {
-    const standortFolder = await state.folderHandle.getDirectoryHandle(
-      `${entry.segments.nummer} ${standortSelect.selectedOptions[0]?.dataset.name || 'UNBEKANNT'}`,
-      { create: true }
-    );
+    const selected = standortSelect.selectedOptions[0];
+    const standortFolder = await state.folderHandle.getDirectoryHandle(`${selected?.value || '0000'} ${selected?.dataset.name || entry.standortName}`, { create: true });
     const bilderFolder = await standortFolder.getDirectoryHandle('Bilder', { create: true });
-    const zoneFolder = await bilderFolder.getDirectoryHandle(zoneToFolder[entry.segments.sache] || entry.segments.sache, { create: true });
-    const fileHandle = await zoneFolder.getFileHandle(buildFileName(entry.segments, entry.ext), { create: true });
+    const zoneFolder = await bilderFolder.getDirectoryHandle(zoneToFolder[entry.zone] || entry.zone, { create: true });
+    const fileHandle = await zoneFolder.getFileHandle(entry.currentName, { create: true });
     const writable = await fileHandle.createWritable();
     await writable.write(entry.file);
     await writable.close();
@@ -275,20 +240,12 @@ async function compressJpeg(file, maxBytes) {
   canvas.height = Math.round(imageBitmap.height * ratio);
   ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
 
-  let quality = 0.92;
+  let quality = 0.9;
   let blob = await canvasToBlob(canvas, quality);
 
   while (blob.size > maxBytes && quality > 0.4) {
     quality -= 0.08;
     blob = await canvasToBlob(canvas, quality);
-  }
-
-  if (blob.size > maxBytes) {
-    const smallerCanvas = document.createElement('canvas');
-    smallerCanvas.width = Math.round(canvas.width * 0.8);
-    smallerCanvas.height = Math.round(canvas.height * 0.8);
-    smallerCanvas.getContext('2d').drawImage(canvas, 0, 0, smallerCanvas.width, smallerCanvas.height);
-    blob = await canvasToBlob(smallerCanvas, Math.max(quality, 0.45));
   }
 
   return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });

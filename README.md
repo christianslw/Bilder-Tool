@@ -1,9 +1,10 @@
 # Bilder-Tool
 
-Web-Tool zum strukturierten Umbenennen und Ablegen von JPG-Bildern nach Standort und Bereich.
+Modernes Web-Tool zum strukturierten Umbenennen und Ablegen von JPG-Bildern nach Standort und Bereich.
 
 ## Funktionen
 
+- Modernes UI mit TailwindCSS (CDN).
 - Zielordner-Auswahl (File System Access API) mit Fallback-Pfadfeld.
 - Standortauswahl über `standorte.js` (`nummer` + `name` werden genutzt).
 - Grafische Bereiche für:
@@ -19,7 +20,7 @@ Web-Tool zum strukturierten Umbenennen und Ablegen von JPG-Bildern nach Standort
   - `Zielordner/{Nummer Name}/Bilder/{Sache}`
 - Kompakte Dateiliste mit:
   - erwartetem Unterordnerpfad
-  - editierbaren Dateinamen-Segmenten (Nummer, Datum, Sache, Kommentar)
+  - direkt anklickbarem und editierbarem Dateinamen
   - altem Namen als dezente Referenz
   - Löschfunktion pro Eintrag
 - Bildkompression auf möglichst `< 1 MB` pro Datei.
