@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bilder-Tool</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1>Bilder-Tool</h1>
+      <div class="controls">
+        <label>
+          Zielordner
+          <div class="folder-picker">
+            <button id="pickFolderBtn" type="button">Ordner wählen</button>
+            <input id="folderFallbackInput" type="text" placeholder="Fallback Pfad" />
+          </div>
+        </label>
+
+        <label>
+          Standort
+          <select id="standortSelect"></select>
+        </label>
+
+        <label>
+          Aufnahmedatum
+          <input id="dateInput" type="date" />
+        </label>
+
+        <label>
+          Kommentar (optional)
+          <input id="commentInput" type="text" placeholder="z. B. Nordseite" />
+        </label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="graphic-panel">
+        <h2>Bildbereiche</h2>
+        <p class="hint">Datei auf Element ziehen oder Element anklicken.</p>
+        <svg viewBox="0 0 700 480" class="site-map" aria-label="Standortgrafik">
+          <rect x="10" y="10" width="680" height="460" class="fence" data-zone="Grundstück" tabindex="0" />
+
+          <rect x="40" y="390" width="220" height="60" class="zone" data-zone="Zufahrt" tabindex="0" />
+          <text x="65" y="425">Zufahrt</text>
+
+          <rect x="520" y="330" width="140" height="90" class="zone" data-zone="Kabine" tabindex="0" />
+          <text x="555" y="380">Kabine</text>
+
+          <rect x="320" y="130" width="35" height="240" class="zone" data-zone="Mast" tabindex="0" />
+          <line x1="337" y1="130" x2="337" y2="370" class="ladder" data-zone="Mast" tabindex="0" />
+          <text x="282" y="115">Mast / Steigleiter</text>
+
+          <line x1="337" y1="165" x2="520" y2="355" class="cable" data-zone="Mast" tabindex="0" />
+          <line x1="337" y1="200" x2="180" y2="410" class="cable" data-zone="Mast" tabindex="0" />
+
+          <rect x="90" y="300" width="150" height="70" class="zone" data-zone="Energietechnik" tabindex="0" />
+          <text x="96" y="340">ZAS Energietechnik</text>
+
+          <text x="22" y="32">Grundstück / Zaun</text>
+        </svg>
+        <input id="hiddenFileInput" type="file" accept="image/jpeg,image/jpg" multiple hidden />
+      </section>
+
+      <aside class="file-panel">
+        <h2>Dateiliste</h2>
+        <ul id="fileList"></ul>
+      </aside>
+    </main>
+
+    <template id="fileItemTemplate">
+      <li class="file-item">
+        <button type="button" class="delete" title="Eintrag löschen">×</button>
+        <p class="path"></p>
+        <div class="name-editor"></div>
+        <p class="old-name"></p>
+      </li>
+    </template>
+
+    <script src="standorte.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
