@@ -1,0 +1,142 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+
+.topbar {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #d1d5db;
+  flex-wrap: wrap;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+button,
+select,
+input {
+  border: 1px solid #9ca3af;
+  border-radius: 0.35rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.diagram-panel,
+.queue-panel {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.diagram-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.drop-zone {
+  background: #f9fafb;
+  border: 2px dashed #9ca3af;
+  border-radius: 0.5rem;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.drop-zone.active {
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.queue-item {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.55rem;
+  background: #fff;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.delete-btn {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  padding: 0.2rem 0.45rem;
+  cursor: pointer;
+}
+
+.name-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+}
+
+.name-editor input {
+  padding: 0.2rem 0.35rem;
+  min-width: 80px;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.small {
+  font-size: 0.78rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .diagram-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
