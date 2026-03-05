@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bilder-Tool</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="field-group">
+        <label for="targetFolderBtn">Zielordner</label>
+        <button id="targetFolderBtn" type="button">Ordner wählen</button>
+        <span id="targetFolderPath" class="muted">Kein Ordner gewählt</span>
+      </div>
+      <div class="field-group">
+        <label for="standortSelect">Standort</label>
+        <select id="standortSelect"></select>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="diagram-panel">
+        <h2>Bild auf Bereich ziehen oder Bereich anklicken</h2>
+        <div class="diagram-grid" id="dropGrid"></div>
+      </section>
+
+      <aside class="queue-panel">
+        <h2>Dateiliste</h2>
+        <div id="fileQueue" class="queue-list"></div>
+      </aside>
+    </main>
+
+    <template id="queueItemTemplate">
+      <article class="queue-item">
+        <div class="queue-header">
+          <strong class="new-name"></strong>
+          <button type="button" class="delete-btn" aria-label="Eintrag entfernen">✕</button>
+        </div>
+        <div class="name-editor"></div>
+        <div class="old-name muted small"></div>
+        <div class="subpath muted small"></div>
+      </article>
+    </template>
+
+    <input id="hiddenFileInput" type="file" accept="image/jpeg,image/jpg" multiple hidden />
+
+    <script src="standorte.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
