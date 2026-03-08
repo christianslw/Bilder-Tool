@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobilfunk-Standort – Isometrische Explosionsansicht</title>
+  <style>
+    :root {
+      --bg: #f2f5f9;
+      --panel: #ffffff;
+      --line: #5f6b7a;
+      --muted: #8894a3;
+      --accent: #2e90ff;
+      --accent-soft: #cfe6ff;
+      --tower: #8b95a1;
+      --tower-dark: #6f7885;
+      --ground-top: #d8e2d1;
+      --ground-side: #b8c3af;
+      --cabin: #d6dde6;
+      --cabin-dark: #b9c2cd;
+      --nea: #f6d45f;
+      --trafo: #cfd7e2;
+      --danger: #ff5252;
+      --ok: #38b56f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #e8edf3 0%, var(--bg) 40%, #eaf0f6 100%);
+      color: #253042;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(700px, 1fr) 360px;
+      min-height: 100vh;
+      gap: 18px;
+      padding: 16px;
+    }
+
+    .canvas-wrap {
+      background: var(--panel);
+      border-radius: 14px;
+      border: 1px solid #d5dee9;
+      box-shadow: 0 8px 26px rgba(32, 46, 66, 0.08);
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    svg {
+      width: 100%;
+      height: calc(100vh - 52px);
+      min-height: 780px;
+      display: block;
+    }
+
+    #parts .part {
+      transition: transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1), filter 200ms ease, opacity 200ms ease;
+      transform-box: fill-box;
+      transform-origin: center;
+      pointer-events: none;
+    }
+
+    #parts .part .outline {
+      stroke: transparent;
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+      transition: stroke 170ms ease;
+    }
+
+    #parts .part.active {
+      filter: drop-shadow(0 7px 12px rgba(33, 77, 123, 0.22));
+    }
+
+    #parts .part.active .outline {
+      stroke: var(--accent);
+    }
+
+    #parts [data-id='mast'] { transform: translate(0, 0); }
+    #parts [data-id='pandunen'] { transform: translate(22px, -16px); }
+    #parts [data-id='fundament'] { transform: translate(0, 0); }
+    #parts [data-id='antennen'] { transform: translate(-54px, -42px); }
+    #parts [data-id='flugwarnbefeuerung'] { transform: translate(46px, -56px); }
+    #parts [data-id='steigweg'] { transform: translate(64px, 10px); }
+    #parts [data-id='kabel'] { transform: translate(-70px, 42px); }
+
+    #parts [data-id='keller'] { transform: translate(-26px, 16px); }
+    #parts [data-id='sendersaal'] { transform: translate(0, -2px); }
+    #parts [data-id='dach'] { transform: translate(32px, -30px); }
+
+    #parts [data-id='trafo'] { transform: translate(72px, -10px); }
+    #parts [data-id='nea'] { transform: translate(96px, 26px); }
+    #parts [data-id='evt'] { transform: translate(20px, 42px); }
+    #parts [data-id='zas'] { transform: translate(52px, 64px); }
+
+    #parts [data-id='zaun'] { transform: translate(0, 0); }
+    #parts [data-id='zisterne'] { transform: translate(-54px, 54px); }
+    #parts [data-id='zufahrt'] { transform: translate(20px, 20px); }
+
+    #parts .part.active[data-id='mast'] { transform: translate(-20px, -22px); }
+    #parts .part.active[data-id='pandunen'] { transform: translate(54px, -38px); }
+    #parts .part.active[data-id='fundament'] { transform: translate(0, 22px); }
+    #parts .part.active[data-id='antennen'] { transform: translate(-88px, -72px); }
+    #parts .part.active[data-id='flugwarnbefeuerung'] { transform: translate(82px, -96px); }
+    #parts .part.active[data-id='steigweg'] { transform: translate(110px, -4px); }
+    #parts .part.active[data-id='kabel'] { transform: translate(-110px, 74px); }
+
+    #parts .part.active[data-id='keller'] { transform: translate(-58px, 30px); }
+    #parts .part.active[data-id='sendersaal'] { transform: translate(0, -28px); }
+    #parts .part.active[data-id='dach'] { transform: translate(68px, -68px); }
+
+    #parts .part.active[data-id='trafo'] { transform: translate(122px, -40px); }
+    #parts .part.active[data-id='nea'] { transform: translate(146px, 4px); }
+    #parts .part.active[data-id='evt'] { transform: translate(20px, 74px); }
+    #parts .part.active[data-id='zas'] { transform: translate(80px, 98px); }
+
+    #parts .part.active[data-id='zaun'] { transform: translate(0, -10px); }
+    #parts .part.active[data-id='zisterne'] { transform: translate(-90px, 88px); }
+    #parts .part.active[data-id='zufahrt'] { transform: translate(44px, 44px); }
+
+    .sidebar {
+      background: var(--panel);
+      border: 1px solid #d5dee9;
+      border-radius: 14px;
+      box-shadow: 0 8px 26px rgba(32, 46, 66, 0.08);
+      padding: 14px;
+      overflow: auto;
+    }
+
+    .sidebar h1 {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+    }
+
+    .sidebar p {
+      margin: 0 0 10px;
+      color: #607086;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    ul { list-style: none; margin: 0; padding: 0; }
+
+    .main-category {
+      border: 1px solid #d8e0ea;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: #fbfdff;
+    }
+
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      font-weight: 700;
+      background: #edf3fb;
+      border-bottom: 1px solid #dde7f4;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .main-header::after {
+      content: "↕";
+      color: #6781a0;
+      font-weight: 500;
+    }
+
+    .sub-list { padding: 6px; }
+
+    .sub-item {
+      border: 1px solid #e0e6ef;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #fff;
+      margin-bottom: 6px;
+      cursor: grab;
+      transition: background 120ms ease, border-color 120ms ease;
+      user-select: none;
+      font-size: 0.93rem;
+    }
+
+    .sub-item:hover,
+    .sub-item.active {
+      background: var(--accent-soft);
+      border-color: #8ebeff;
+    }
+
+    .dragging {
+      opacity: 0.45;
+    }
+
+    .drop-target {
+      outline: 2px dashed var(--accent);
+      outline-offset: 1px;
+    }
+
+    .legend {
+      margin-top: 10px;
+      border-top: 1px solid #dde4ef;
+      padding-top: 9px;
+      color: #607086;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="canvas-wrap">
+      <svg viewBox="0 0 1400 950" aria-label="Explosionsansicht Mobilfunk-Standort">
+        <!-- Static hitbox layer (must stay fixed, transparent and at bottom for zero-jitter hover) -->
+        <g id="hitboxes" opacity="0">
+          <polygon data-target="mast" points="615,150 700,120 815,610 720,640" />
+          <polygon data-target="pandunen" points="470,160 1100,150 1190,760 350,760" />
+          <polygon data-target="fundament" points="560,600 880,560 950,760 500,800" />
+          <polygon data-target="antennen" points="480,130 890,90 920,350 440,380" />
+          <polygon data-target="flugwarnbefeuerung" points="710,40 880,50 860,180 690,170" />
+          <polygon data-target="steigweg" points="780,170 940,165 965,640 790,660" />
+          <polygon data-target="kabel" points="390,300 620,300 650,760 330,790" />
+
+          <polygon data-target="keller" points="860,420 1130,390 1190,540 910,570" />
+          <polygon data-target="sendersaal" points="820,320 1120,280 1210,470 920,510" />
+          <polygon data-target="dach" points="840,240 1100,210 1170,350 900,390" />
+
+          <polygon data-target="trafo" points="980,530 1240,500 1300,650 1030,690" />
+          <polygon data-target="nea" points="1000,660 1250,640 1290,790 1040,810" />
+          <polygon data-target="evt" points="740,700 960,670 1000,790 760,820" />
+          <polygon data-target="zas" points="860,760 1080,735 1120,860 890,890" />
+
+          <polygon data-target="zaun" points="240,470 1260,410 1320,860 180,900" />
+          <polygon data-target="zisterne" points="300,730 520,680 600,880 360,920" />
+          <polygon data-target="zufahrt" points="100,760 500,690 740,940 260,940" />
+        </g>
+
+        <g id="parts">
+          <!-- Grundstück base -->
+          <g class="part" data-id="zufahrt">
+            <polygon points="90,760 440,700 670,930 250,930" fill="#9aa5b4" opacity="0.95" />
+            <polygon points="250,930 670,930 670,945 250,945" fill="#7a8797" />
+            <polygon class="outline" points="90,760 440,700 670,930 250,930" fill="none" />
+          </g>
+
+          <g class="part" data-id="zaun">
+            <polygon points="230,470 1240,420 1300,850 170,890" fill="#ccd5e2" opacity="0.2" />
+            <g stroke="#6d7b8d" stroke-width="3" fill="none" stroke-linecap="round">
+              <polyline points="230,470 1240,420 1300,850 170,890 230,470" />
+              <line x1="310" y1="466" x2="250" y2="878" />
+              <line x1="430" y1="458" x2="370" y2="870" />
+              <line x1="550" y1="452" x2="490" y2="865" />
+              <line x1="670" y1="446" x2="610" y2="860" />
+              <line x1="790" y1="440" x2="730" y2="854" />
+              <line x1="910" y1="434" x2="850" y2="848" />
+              <line x1="1030" y1="428" x2="970" y2="842" />
+              <line x1="1150" y1="422" x2="1090" y2="836" />
+            </g>
+            <polygon class="outline" points="230,470 1240,420 1300,850 170,890" fill="none" />
+          </g>
+
+          <g class="part" data-id="zisterne">
+            <ellipse cx="395" cy="780" rx="90" ry="42" fill="#7f99b7" />
+            <path d="M305 780v78c0 24 180 24 180 0v-78" fill="#6e86a3" />
+            <ellipse cx="395" cy="858" rx="90" ry="42" fill="#5f7894" />
+            <rect x="372" y="748" width="46" height="16" rx="4" fill="#526a86" />
+            <polygon class="outline" points="302,780 487,780 487,900 302,900" fill="none" />
+          </g>
+
+          <g class="part" data-id="fundament">
+            <polygon points="560,610 860,570 930,750 500,790" fill="var(--ground-side)" />
+            <polygon points="560,560 860,520 930,570 560,610" fill="var(--ground-top)" />
+            <polygon points="500,790 930,750 930,770 500,810" fill="#a9b59d" />
+            <polygon class="outline" points="560,560 860,520 930,750 500,790" fill="none" />
+          </g>
+
+          <!-- Mast + accessories -->
+          <g class="part" data-id="mast">
+            <polygon points="670,150 720,132 790,610 735,628" fill="var(--tower-dark)" />
+            <polygon points="615,165 670,150 735,628 675,642" fill="var(--tower)" />
+            <polygon points="615,165 720,132 790,610 675,642" fill="none" stroke="#5a626c" stroke-width="2" />
+            <g stroke="#cad1da" stroke-width="3" opacity="0.9">
+              <line x1="625" y1="220" x2="735" y2="200" />
+              <line x1="633" y1="270" x2="744" y2="250" />
+              <line x1="640" y1="320" x2="752" y2="300" />
+              <line x1="648" y1="370" x2="760" y2="350" />
+              <line x1="656" y1="420" x2="768" y2="400" />
+              <line x1="664" y1="470" x2="776" y2="450" />
+              <line x1="672" y1="520" x2="784" y2="500" />
+              <line x1="680" y1="570" x2="792" y2="550" />
+              <line x1="735" y1="200" x2="633" y2="270" />
+              <line x1="744" y1="250" x2="640" y2="320" />
+              <line x1="752" y1="300" x2="648" y2="370" />
+              <line x1="760" y1="350" x2="656" y2="420" />
+              <line x1="768" y1="400" x2="664" y2="470" />
+              <line x1="776" y1="450" x2="672" y2="520" />
+              <line x1="784" y1="500" x2="680" y2="570" />
+            </g>
+            <polygon class="outline" points="615,165 720,132 790,610 675,642" fill="none" />
+          </g>
+
+          <g class="part" data-id="pandunen" stroke="#7e8793" stroke-width="4" stroke-linecap="round">
+            <line x1="705" y1="160" x2="480" y2="680" />
+            <line x1="715" y1="157" x2="1040" y2="660" />
+            <line x1="690" y1="166" x2="380" y2="740" />
+            <line x1="728" y1="156" x2="1130" y2="745" />
+            <circle cx="480" cy="680" r="6" fill="#6d7783" />
+            <circle cx="1040" cy="660" r="6" fill="#6d7783" />
+            <circle cx="380" cy="740" r="6" fill="#6d7783" />
+            <circle cx="1130" cy="745" r="6" fill="#6d7783" />
+            <polygon class="outline" points="350,150 1130,150 1130,760 350,760" fill="none" />
+          </g>
+
+          <g class="part" data-id="antennen">
+            <g fill="#dbe3ed" stroke="#687382" stroke-width="2">
+              <polygon points="570,210 620,199 642,312 590,325" />
+              <polygon points="770,175 820,164 842,277 790,290" />
+              <polygon points="640,318 692,307 714,420 660,433" />
+              <polygon points="840,282 892,271 914,385 860,398" />
+            </g>
+            <g fill="#a5b2c2">
+              <polygon points="620,199 632,193 654,306 642,312" />
+              <polygon points="820,164 832,158 854,271 842,277" />
+              <polygon points="692,307 704,301 726,414 714,420" />
+              <polygon points="892,271 904,265 926,378 914,385" />
+            </g>
+            <polygon class="outline" points="550,160 930,130 960,430 520,450" fill="none" />
+          </g>
+
+          <g class="part" data-id="flugwarnbefeuerung">
+            <polygon points="760,110 774,105 784,135 770,139" fill="#b9c7d8" />
+            <ellipse cx="770" cy="102" rx="16" ry="10" fill="#ff6e6e" stroke="#b43131" stroke-width="2" />
+            <circle cx="770" cy="102" r="4" fill="#ffdcdc" />
+            <polygon class="outline" points="740,80 806,80 806,150 740,150" fill="none" />
+          </g>
+
+          <g class="part" data-id="steigweg">
+            <g stroke="#596473" stroke-width="4">
+              <line x1="820" y1="190" x2="860" y2="620" />
+              <line x1="850" y1="183" x2="890" y2="613" />
+              <line x1="822" y1="230" x2="852" y2="223" />
+              <line x1="826" y1="270" x2="856" y2="263" />
+              <line x1="830" y1="310" x2="860" y2="303" />
+              <line x1="834" y1="350" x2="864" y2="343" />
+              <line x1="838" y1="390" x2="868" y2="383" />
+              <line x1="842" y1="430" x2="872" y2="423" />
+              <line x1="846" y1="470" x2="876" y2="463" />
+              <line x1="850" y1="510" x2="880" y2="503" />
+              <line x1="854" y1="550" x2="884" y2="543" />
+            </g>
+            <polygon class="outline" points="810,170 930,160 960,650 820,670" fill="none" />
+          </g>
+
+          <g class="part" data-id="kabel" stroke="#303741" stroke-width="5" fill="none" stroke-linecap="round">
+            <path d="M480 330 C440 390, 430 430, 420 500" />
+            <path d="M500 332 C460 392, 450 442, 438 530" />
+            <path d="M520 334 C480 394, 470 454, 456 560" />
+            <path d="M540 336 C500 398, 490 468, 474 590" />
+            <path d="M560 338 C520 402, 510 478, 492 620" />
+            <path d="M580 340 C540 406, 530 492, 510 650" />
+            <path d="M600 342 C560 410, 550 506, 528 680" />
+            <polygon class="outline" points="380,300 640,290 680,760 340,800" fill="none" />
+          </g>
+
+          <!-- Kabine -->
+          <g class="part" data-id="keller">
+            <polygon points="920,450 1090,425 1140,520 960,548" fill="#9aa6b3" />
+            <polygon points="960,548 1140,520 1140,560 960,588" fill="#8290a1" />
+            <polygon points="920,450 960,548 960,588 920,490" fill="#8794a3" />
+            <rect x="1002" y="494" width="46" height="50" fill="#6f7d8e" />
+            <polygon class="outline" points="920,450 1090,425 1140,560 960,588" fill="none" />
+          </g>
+
+          <g class="part" data-id="sendersaal">
+            <polygon points="860,344 1060,316 1140,468 930,500" fill="var(--cabin)" />
+            <polygon points="1060,316 1140,468 1140,520 1060,368" fill="var(--cabin-dark)" />
+            <polygon points="860,344 930,500 930,552 860,396" fill="#c3ccd8" />
+            <rect x="910" y="406" width="58" height="62" fill="#8593a3" />
+            <rect x="990" y="392" width="48" height="30" fill="#99a7b7" />
+            <polygon class="outline" points="860,344 1060,316 1140,520 930,552" fill="none" />
+          </g>
+
+          <g class="part" data-id="dach">
+            <polygon points="860,332 1060,302 1150,348 930,382" fill="#9aa7b7" />
+            <polygon points="930,382 1150,348 1150,370 930,404" fill="#7f8da0" />
+            <polygon class="outline" points="860,332 1060,302 1150,370 930,404" fill="none" />
+          </g>
+
+          <!-- Energietechnik -->
+          <g class="part" data-id="trafo">
+            <polygon points="1030,540 1180,520 1240,640 1080,662" fill="var(--trafo)" />
+            <polygon points="1180,520 1240,640 1240,690 1180,570" fill="#b8c2d1" />
+            <polygon points="1030,540 1080,662 1080,712 1030,590" fill="#b2bccb" />
+            <g fill="#8e98a8">
+              <rect x="1082" y="560" width="9" height="90" rx="2" />
+              <rect x="1098" y="558" width="9" height="94" rx="2" />
+              <rect x="1114" y="556" width="9" height="98" rx="2" />
+              <rect x="1130" y="554" width="9" height="102" rx="2" />
+              <rect x="1146" y="552" width="9" height="106" rx="2" />
+            </g>
+            <g>
+              <ellipse cx="1112" cy="528" rx="13" ry="8" fill="#d9e1ec" stroke="#7f8898" stroke-width="2" />
+              <ellipse cx="1146" cy="522" rx="13" ry="8" fill="#d9e1ec" stroke="#7f8898" stroke-width="2" />
+              <ellipse cx="1180" cy="516" rx="13" ry="8" fill="#d9e1ec" stroke="#7f8898" stroke-width="2" />
+              <rect x="1109" y="505" width="6" height="18" fill="#697386" />
+              <rect x="1143" y="499" width="6" height="18" fill="#697386" />
+              <rect x="1177" y="493" width="6" height="18" fill="#697386" />
+            </g>
+            <polygon class="outline" points="1030,540 1180,520 1240,690 1080,712" fill="none" />
+          </g>
+
+          <g class="part" data-id="nea">
+            <polygon points="1040,682 1210,662 1260,760 1080,782" fill="var(--nea)" />
+            <polygon points="1210,662 1260,760 1260,802 1210,704" fill="#ddb94d" />
+            <polygon points="1040,682 1080,782 1080,824 1040,724" fill="#e7c65a" />
+            <rect x="1090" y="706" width="105" height="10" fill="#8e7a38" opacity="0.85" />
+            <rect x="1090" y="726" width="105" height="10" fill="#8e7a38" opacity="0.85" />
+            <rect x="1090" y="746" width="105" height="10" fill="#8e7a38" opacity="0.85" />
+            <rect x="1190" y="670" width="14" height="46" fill="#6f7482" />
+            <rect x="1192" y="656" width="10" height="16" fill="#575d6b" />
+            <rect x="1062" y="740" width="18" height="28" fill="#6f5e2d" />
+            <polygon class="outline" points="1040,682 1210,662 1260,802 1080,824" fill="none" />
+          </g>
+
+          <g class="part" data-id="evt">
+            <polygon points="760,720 900,700 944,784 796,806" fill="#d6dee8" />
+            <polygon points="900,700 944,784 944,828 900,744" fill="#c0cad8" />
+            <polygon points="760,720 796,806 796,850 760,764" fill="#c9d3e1" />
+            <rect x="806" y="744" width="70" height="36" fill="#8e9aac" />
+            <polygon class="outline" points="760,720 900,700 944,828 796,850" fill="none" />
+          </g>
+
+          <g class="part" data-id="zas">
+            <polygon points="890,770 1020,754 1060,832 924,850" fill="#c4d2e3" />
+            <polygon points="1020,754 1060,832 1060,872 1020,794" fill="#aebed1" />
+            <polygon points="890,770 924,850 924,892 890,812" fill="#b7c7d9" />
+            <circle cx="940" cy="814" r="8" fill="#4b617a" />
+            <rect x="962" y="798" width="40" height="26" fill="#7489a1" />
+            <polygon class="outline" points="890,770 1020,754 1060,872 924,892" fill="none" />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <aside class="sidebar">
+      <h1>Komponenten</h1>
+      <p>Hover synchronisiert SVG und Liste. Drag & Drop: Hauptkategorien untereinander, Unterpunkte nur innerhalb ihrer Kategorie.</p>
+
+      <ul id="main-list">
+        <li class="main-category" draggable="true" data-main="mast-cat">
+          <div class="main-header">Mast</div>
+          <ul class="sub-list" data-parent="mast-cat">
+            <li class="sub-item" draggable="true" data-target="mast">Mast</li>
+            <li class="sub-item" draggable="true" data-target="pandunen">Pandunen</li>
+            <li class="sub-item" draggable="true" data-target="fundament">Fundament</li>
+            <li class="sub-item" draggable="true" data-target="antennen">Antennen</li>
+            <li class="sub-item" draggable="true" data-target="flugwarnbefeuerung">Flugwarnbefeuerung</li>
+            <li class="sub-item" draggable="true" data-target="steigweg">Steigweg</li>
+            <li class="sub-item" draggable="true" data-target="kabel">Kabel</li>
+          </ul>
+        </li>
+
+        <li class="main-category" draggable="true" data-main="kabine-cat">
+          <div class="main-header">Kabine</div>
+          <ul class="sub-list" data-parent="kabine-cat">
+            <li class="sub-item" draggable="true" data-target="keller">Keller</li>
+            <li class="sub-item" draggable="true" data-target="sendersaal">Sendersaal</li>
+            <li class="sub-item" draggable="true" data-target="dach">Dach</li>
+          </ul>
+        </li>
+
+        <li class="main-category" draggable="true" data-main="energie-cat">
+          <div class="main-header">Energietechnik</div>
+          <ul class="sub-list" data-parent="energie-cat">
+            <li class="sub-item" draggable="true" data-target="trafo">Trafo</li>
+            <li class="sub-item" draggable="true" data-target="nea">NEA</li>
+            <li class="sub-item" draggable="true" data-target="evt">Evt</li>
+            <li class="sub-item" draggable="true" data-target="zas">ZAS</li>
+          </ul>
+        </li>
+
+        <li class="main-category" draggable="true" data-main="grund-cat">
+          <div class="main-header">Grundstück</div>
+          <ul class="sub-list" data-parent="grund-cat">
+            <li class="sub-item" draggable="true" data-target="zaun">Zaun</li>
+            <li class="sub-item" draggable="true" data-target="zisterne">Zisterne</li>
+            <li class="sub-item" draggable="true" data-target="zufahrt">Zufahrt</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="legend">Hinweis: Hitboxes sind unsichtbar und statisch, die sichtbaren SVG-Teile bewegen sich bei Hover zur Explosionsansicht.</div>
+    </aside>
+  </div>
+
+  <script>
+    const partById = new Map([...document.querySelectorAll('#parts .part')].map((el) => [el.dataset.id, el]));
+    const listItemById = new Map([...document.querySelectorAll('.sub-item')].map((el) => [el.dataset.target, el]));
+
+    function setActive(id, active) {
+      const part = partById.get(id);
+      const item = listItemById.get(id);
+      if (part) part.classList.toggle('active', active);
+      if (item) item.classList.toggle('active', active);
+    }
+
+    document.querySelectorAll('#hitboxes [data-target]').forEach((hitbox) => {
+      const id = hitbox.dataset.target;
+      hitbox.style.pointerEvents = 'all';
+      hitbox.addEventListener('mouseenter', () => setActive(id, true));
+      hitbox.addEventListener('mouseleave', () => setActive(id, false));
+    });
+
+    document.querySelectorAll('.sub-item').forEach((item) => {
+      const id = item.dataset.target;
+      item.addEventListener('mouseenter', () => setActive(id, true));
+      item.addEventListener('mouseleave', () => setActive(id, false));
+    });
+
+    // Drag & drop for main categories
+    const mainList = document.querySelector('#main-list');
+    let draggingMain = null;
+    mainList.querySelectorAll('.main-category').forEach((cat) => {
+      cat.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('sub-item')) return;
+        draggingMain = cat;
+        cat.classList.add('dragging');
+      });
+      cat.addEventListener('dragend', () => {
+        cat.classList.remove('dragging');
+        draggingMain = null;
+      });
+      cat.addEventListener('dragover', (e) => {
+        if (!draggingMain || draggingMain === cat) return;
+        e.preventDefault();
+        cat.classList.add('drop-target');
+      });
+      cat.addEventListener('dragleave', () => cat.classList.remove('drop-target'));
+      cat.addEventListener('drop', (e) => {
+        if (!draggingMain || draggingMain === cat) return;
+        e.preventDefault();
+        cat.classList.remove('drop-target');
+        const rect = cat.getBoundingClientRect();
+        const shouldInsertBefore = e.clientY < rect.top + rect.height / 2;
+        if (shouldInsertBefore) {
+          mainList.insertBefore(draggingMain, cat);
+        } else {
+          mainList.insertBefore(draggingMain, cat.nextElementSibling);
+        }
+      });
+    });
+
+    // Drag & drop for sub-items, restricted to own category
+    document.querySelectorAll('.sub-list').forEach((subList) => {
+      let draggingSub = null;
+
+      subList.querySelectorAll('.sub-item').forEach((subItem) => {
+        subItem.addEventListener('dragstart', () => {
+          draggingSub = subItem;
+          subItem.classList.add('dragging');
+        });
+
+        subItem.addEventListener('dragend', () => {
+          subItem.classList.remove('dragging');
+          draggingSub = null;
+        });
+
+        subItem.addEventListener('dragover', (e) => {
+          if (!draggingSub || draggingSub === subItem) return;
+          e.preventDefault();
+          subItem.classList.add('drop-target');
+        });
+
+        subItem.addEventListener('dragleave', () => subItem.classList.remove('drop-target'));
+
+        subItem.addEventListener('drop', (e) => {
+          if (!draggingSub || draggingSub === subItem) return;
+          e.preventDefault();
+          subItem.classList.remove('drop-target');
+          const rect = subItem.getBoundingClientRect();
+          const before = e.clientY < rect.top + rect.height / 2;
+          if (before) {
+            subList.insertBefore(draggingSub, subItem);
+          } else {
+            subList.insertBefore(draggingSub, subItem.nextElementSibling);
+          }
+        });
+      });
+
+      // Prevent dropping into different lists by only enabling dragover on same subList
+      subList.addEventListener('dragover', (e) => {
+        if (draggingSub && draggingSub.parentElement === subList) {
+          e.preventDefault();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
